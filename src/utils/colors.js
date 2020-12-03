@@ -3,8 +3,8 @@ export const primary2 = '#ecf4f9';
 export const primary3 = '#9fc7e0';
 export const primary35 = '#97bace';
 export const primary4 = 'hsl(204,38%,55%)';
-export const primary45 = 'hsl(205,49%,66%)';
-export const primary46 = '#67a1cb';
+export const primary45 = 'hsl(218,49%,66%)';
+export const primary46 = '#6778cb';
 
 export const primary15 = 'rgb(241 249 255)';
 

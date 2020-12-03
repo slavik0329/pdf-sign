@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import {cleanBorder, primary, primary45} from "./utils/colors";
+import {cleanBorder,  primary45} from "./utils/colors";
 
 export default function Drop({ onLoaded }) {
   const styles = {
