@@ -29,6 +29,7 @@ function App() {
     <div className="App">
       <div style={styles.sigBlock}>
         <SignatureCanvas
+          velocityFilterWeight={1}
           ref={sigRef}
           canvasProps={{ width: '600', height: 200, className: "sigCanvas" }}
         />
@@ -54,35 +55,23 @@ function App() {
           const newX = (x * originalWidth) / documentRef.current.clientWidth;
 
           const pdfDoc = await PDFDocument.load(pdf);
-          const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
           const pages = pdfDoc.getPages();
 
           const firstPage = pages[0];
-          // const { width, height } = firstPage.getSize();
-          // firstPage.drawText("Test", {
-          //   x: newX,
-          //   y: newY,
-          //   size: 50,
-          //   font: helveticaFont,
-          //   // color: rgb(0.95, 0.1, 0.1),
-          // });
 
           const sigURL = sigRef.current.toDataURL();
 
           const pngImageBytes = await fetch(sigURL).then((res) => res.arrayBuffer())
-console.log('byte', pngImageBytes)
-          const jpgImage = await pdfDoc.embedPng(pngImageBytes)
-          const jpgDims = jpgImage.scale(0.5)
+          const pngImage = await pdfDoc.embedPng(pngImageBytes)
+          const pngDims = pngImage.scale(0.5)
 
-          firstPage.drawImage(jpgImage, {
+          firstPage.drawImage(pngImage, {
             x: newX,
             y: newY,
-            width: jpgDims.width,
-            height: jpgDims.height,
-            // opacity: 0.75,
+            width: pngDims.width,
+            height: pngDims.height,
           })
-          console.log('sig',sigURL)
 
           const pdfBytes = await pdfDoc.save();
           const blob = new Blob([new Uint8Array(pdfBytes)]);
@@ -97,7 +86,6 @@ console.log('byte', pngImageBytes)
             width={800}
             height={1200}
             onLoadSuccess={(data) => {
-              console.log("loaded", data);
               setPageDetails(data);
             }}
           />
