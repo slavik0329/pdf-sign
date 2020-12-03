@@ -2,107 +2,136 @@ import "./App.css";
 import { useRef, useState } from "react";
 import Drop from "./Drop";
 import { Document, Page, pdfjs } from "react-pdf";
-import { PDFDocument, StandardFonts } from "pdf-lib";
+import { PDFDocument } from "pdf-lib";
 import { blobToURL } from "./utils/Utils";
-import SignatureCanvas from "react-signature-canvas";
+import PagingControl from "./components/PagingControl";
+import { AddSigDialog } from "./components/AddSigDialog";
+import { Header } from "./Header";
 import { BigButton } from "./components/BigButton";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 function App() {
   const styles = {
+    container: {
+      maxWidth: 900,
+      margin: "0 auto",
+    },
     sigBlock: {
       display: "inline-block",
       border: "1px solid #000",
     },
+    documentBlock: {
+      maxWidth: 800,
+      margin: "20px auto",
+      marginTop: 8,
+      border: "1px solid #999",
+    },
+    controls: {
+      maxWidth: 800,
+      margin: "0 auto",
+    },
   };
   const [pdf, setPdf] = useState(null);
+  const [signatureURL, setSignatureURL] = useState(null);
+  const [signatureDialogVisible, setSignatureDialogVisible] = useState(false);
   const [pageNum, setPageNum] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [pageDetails, setPageDetails] = useState(null);
   const documentRef = useRef(null);
-  const sigRef = useRef(null);
 
   return (
-    <div className="App">
-      <div style={styles.sigBlock}>
-        <SignatureCanvas
-          velocityFilterWeight={1}
-          ref={sigRef}
-          canvasProps={{ width: "600", height: 200, className: "sigCanvas" }}
-        />
-      </div>
-      <Drop
-        onLoaded={async (files) => {
-          const URL = await blobToURL(files[0]);
-          setPdf(URL);
-        }}
-      />
-      {pdf ? (
-        <div>
-          <div>
-            Pages: {totalPages} Current Page: {pageNum + 1}
-          </div>
-          <div>
-            <BigButton title={"Prev Page"} onClick={()=>setPageNum(pageNum-1)} />
-            <BigButton title={"Next Page"} onClick={()=>setPageNum(pageNum+1)} />
-          </div>
-        </div>
-      ) : null}
-      <div
-        ref={documentRef}
-        style={{ width: 800 }}
-        onClick={async (e) => {
-          const { originalHeight, originalWidth } = pageDetails;
-
-          const y =
-            documentRef.current.clientHeight -
-            (e.pageY - documentRef.current.offsetTop);
-          const x = e.pageX - documentRef.current.offsetLeft;
-
-          const newY = (y * originalHeight) / documentRef.current.clientHeight;
-          const newX = (x * originalWidth) / documentRef.current.clientWidth;
-
-          const pdfDoc = await PDFDocument.load(pdf);
-
-          const pages = pdfDoc.getPages();
-
-          const firstPage = pages[pageNum];
-
-          const sigURL = sigRef.current.toDataURL();
-
-          const pngImage = await pdfDoc.embedPng(sigURL);
-          const pngDims = pngImage.scale(0.5);
-
-          firstPage.drawImage(pngImage, {
-            x: newX,
-            y: newY,
-            width: pngDims.width,
-            height: pngDims.height,
-          });
-
-          const pdfBytes = await pdfDoc.save();
-          const blob = new Blob([new Uint8Array(pdfBytes)]);
-
-          const URL = await blobToURL(blob);
-          setPdf(URL);
-        }}
-      >
-        <Document
-          file={pdf}
-          onLoadSuccess={(data) => {
-            setTotalPages(data.numPages);
-          }}
-        >
-          <Page
-            pageNumber={pageNum + 1}
-            width={800}
-            height={1200}
-            onLoadSuccess={(data) => {
-              setPageDetails(data);
+    <div>
+      <Header />
+      <div style={styles.container}>
+        {signatureDialogVisible ? (
+          <AddSigDialog
+            onClose={() => setSignatureDialogVisible(false)}
+            onConfirm={(url) => {
+              setSignatureURL(url);
+              setSignatureDialogVisible(false);
             }}
           />
-        </Document>
+        ) : null}
+
+        {!pdf ? (
+          <Drop
+            onLoaded={async (files) => {
+              const URL = await blobToURL(files[0]);
+              setPdf(URL);
+            }}
+          />
+        ) : null}
+        {pdf ? (
+          <div>
+            <PagingControl
+              pageNum={pageNum}
+              setPageNum={setPageNum}
+              totalPages={totalPages}
+            />
+            <div style={styles.controls}>
+              <BigButton
+                title={"Add signature"}
+                onClick={() => setSignatureDialogVisible(true)}
+              />
+            </div>
+            <div
+              ref={documentRef}
+              style={styles.documentBlock}
+              onClick={async (e) => {
+                const { originalHeight, originalWidth } = pageDetails;
+
+                const y =
+                  documentRef.current.clientHeight -
+                  (e.pageY - documentRef.current.offsetTop);
+                const x = e.pageX - documentRef.current.offsetLeft;
+
+                // new XY in relation to actual document size
+                const newY =
+                  (y * originalHeight) / documentRef.current.clientHeight;
+                const newX =
+                  (x * originalWidth) / documentRef.current.clientWidth;
+
+                const pdfDoc = await PDFDocument.load(pdf);
+
+                const pages = pdfDoc.getPages();
+                const firstPage = pages[pageNum];
+
+                // const pngImage = await pdfDoc.embedPng(sigURL);
+                // const pngDims = pngImage.scale(0.5);
+                //
+                // firstPage.drawImage(pngImage, {
+                //   x: newX,
+                //   y: newY,
+                //   width: pngDims.width,
+                //   height: pngDims.height,
+                // });
+                //
+                // const pdfBytes = await pdfDoc.save();
+                // const blob = new Blob([new Uint8Array(pdfBytes)]);
+                //
+                // const URL = await blobToURL(blob);
+                // setPdf(URL);
+              }}
+            >
+              <Document
+                file={pdf}
+                onLoadSuccess={(data) => {
+                  setTotalPages(data.numPages);
+                }}
+              >
+                <Page
+                  pageNumber={pageNum + 1}
+                  width={800}
+                  height={1200}
+                  onLoadSuccess={(data) => {
+                    setPageDetails(data);
+                  }}
+                />
+              </Document>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -1,21 +1,31 @@
-import React, {useCallback} from 'react'
-import {useDropzone} from 'react-dropzone'
+import React, { useCallback } from "react";
+import { useDropzone } from "react-dropzone";
+import {cleanBorder, primary, primary45} from "./utils/colors";
 
-export default function Drop({onLoaded}) {
-  const onDrop = useCallback(acceptedFiles => {
+export default function Drop({ onLoaded }) {
+  const styles = {
+    container: {
+      textAlign: 'center',
+      border: cleanBorder,
+      padding: 20,
+      marginTop: 12,
+      color: primary45,
+      fontSize: 18,
+      fontWeight: 600,
+      borderRadius: 4,
+    },
+  };
+
+  const onDrop = useCallback((acceptedFiles) => {
     onLoaded(acceptedFiles);
     // Do something with the files
-  }, [])
-  const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop})
+  }, []);
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   return (
-    <div {...getRootProps()}>
+    <div {...getRootProps()} style={styles.container}>
       <input {...getInputProps()} />
-      {
-        isDragActive ?
-          <p>Drop the files here ...</p> :
-          <p>Drag 'n' drop some files here, or click to select files</p>
-      }
+      {isDragActive ? <p>Drop a PDF here</p> : <p>Drag a PDF here</p>}
     </div>
-  )
+  );
 }
