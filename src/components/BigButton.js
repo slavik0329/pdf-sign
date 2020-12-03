@@ -12,6 +12,7 @@ export function BigButton({
   style,
   noHover,
   id,
+  marginRight
 }) {
   const [hoverRef, isHovered] = useHover();
 
@@ -45,6 +46,7 @@ export function BigButton({
       cursor: 'pointer',
       userSelect: 'none',
       boxSizing: 'border-box',
+      marginRight
     },
   };
 

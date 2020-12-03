@@ -8,8 +8,18 @@ import PagingControl from "./components/PagingControl";
 import { AddSigDialog } from "./components/AddSigDialog";
 import { Header } from "./Header";
 import { BigButton } from "./components/BigButton";
+import DraggableSignature from "./components/DraggableSignature";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+
+function downloadURI(uri, name) {
+  var link = document.createElement("a");
+  link.download = name;
+  link.href = uri;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
 
 function App() {
   const styles = {
@@ -34,6 +44,7 @@ function App() {
   };
   const [pdf, setPdf] = useState(null);
   const [signatureURL, setSignatureURL] = useState(null);
+  const [position, setPosition] = useState(null);
   const [signatureDialogVisible, setSignatureDialogVisible] = useState(false);
   const [pageNum, setPageNum] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -70,32 +81,93 @@ function App() {
               totalPages={totalPages}
             />
             <div style={styles.controls}>
-              <BigButton
-                title={"Add signature"}
-                onClick={() => setSignatureDialogVisible(true)}
-              />
+              {!signatureURL ? (
+                <BigButton
+                  marginRight={8}
+                  title={"Add signature"}
+                  onClick={() => setSignatureDialogVisible(true)}
+                />
+              ) : null}
+              {signatureURL && position ? (
+                <BigButton
+                  marginRight={8}
+                  title={"Set signature"}
+                  onClick={async () => {
+                    const { originalHeight, originalWidth } = pageDetails;
+
+                    const y =
+                      documentRef.current.clientHeight -
+                      (position.y -
+                        position.offsetY + 64-
+                        documentRef.current.offsetTop);
+                    const x =
+                      position.x -
+                      position.offsetX -
+                      documentRef.current.offsetLeft;
+
+                    // new XY in relation to actual document size
+                    const newY =
+                      (y * originalHeight) / documentRef.current.clientHeight;
+                    const newX =
+                      (x * originalWidth) / documentRef.current.clientWidth;
+
+                    const pdfDoc = await PDFDocument.load(pdf);
+
+                    const pages = pdfDoc.getPages();
+                    const firstPage = pages[pageNum];
+
+                    const pngImage = await pdfDoc.embedPng(signatureURL);
+                    const pngDims = pngImage.scale(0.25);
+
+                    firstPage.drawImage(pngImage, {
+                      x: newX,
+                      y: newY,
+                      width: pngDims.width,
+                      height: pngDims.height,
+                    });
+
+                    const pdfBytes = await pdfDoc.save();
+                    const blob = new Blob([new Uint8Array(pdfBytes)]);
+
+                    const URL = await blobToURL(blob);
+                    setPdf(URL);
+                    setPosition(null);
+                    setSignatureURL(null);
+                  }}
+                />
+              ) : null}
+              {pdf?<BigButton
+                marginRight={8}
+                inverted={true}
+                title={"Download"}
+                onClick={() => {
+                  console.log('pf', pdf)
+                  downloadURI(pdf, 'file.pdf')
+                }}
+              />:null}
             </div>
             <div
               ref={documentRef}
               style={styles.documentBlock}
               onClick={async (e) => {
-                const { originalHeight, originalWidth } = pageDetails;
-
-                const y =
-                  documentRef.current.clientHeight -
-                  (e.pageY - documentRef.current.offsetTop);
-                const x = e.pageX - documentRef.current.offsetLeft;
-
-                // new XY in relation to actual document size
-                const newY =
-                  (y * originalHeight) / documentRef.current.clientHeight;
-                const newX =
-                  (x * originalWidth) / documentRef.current.clientWidth;
-
-                const pdfDoc = await PDFDocument.load(pdf);
-
-                const pages = pdfDoc.getPages();
-                const firstPage = pages[pageNum];
+                return null;
+                // const { originalHeight, originalWidth } = pageDetails;
+                //
+                // const y =
+                //   documentRef.current.clientHeight -
+                //   (e.pageY - documentRef.current.offsetTop);
+                // const x = e.pageX - documentRef.current.offsetLeft;
+                //
+                // // new XY in relation to actual document size
+                // const newY =
+                //   (y * originalHeight) / documentRef.current.clientHeight;
+                // const newX =
+                //   (x * originalWidth) / documentRef.current.clientWidth;
+                //
+                // const pdfDoc = await PDFDocument.load(pdf);
+                //
+                // const pages = pdfDoc.getPages();
+                // const firstPage = pages[pageNum];
 
                 // const pngImage = await pdfDoc.embedPng(sigURL);
                 // const pngDims = pngImage.scale(0.5);
@@ -114,6 +186,15 @@ function App() {
                 // setPdf(URL);
               }}
             >
+              {signatureURL ? (
+                <DraggableSignature
+                  url={signatureURL}
+                  onEnd={async (ev) => {
+                    setPosition(ev);
+                    console.log(ev);
+                  }}
+                />
+              ) : null}
               <Document
                 file={pdf}
                 onLoadSuccess={(data) => {
