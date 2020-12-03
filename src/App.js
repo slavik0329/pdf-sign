@@ -3,8 +3,9 @@ import { useRef, useState } from "react";
 import Drop from "./Drop";
 import { Document, Page, pdfjs } from "react-pdf";
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { blobToURL } from "./Utils";
+import { blobToURL } from "./utils/Utils";
 import SignatureCanvas from "react-signature-canvas";
+import { BigButton } from "./components/BigButton";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
@@ -16,6 +17,8 @@ function App() {
     },
   };
   const [pdf, setPdf] = useState(null);
+  const [pageNum, setPageNum] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [pageDetails, setPageDetails] = useState(null);
   const documentRef = useRef(null);
   const sigRef = useRef(null);
@@ -35,6 +38,17 @@ function App() {
           setPdf(URL);
         }}
       />
+      {pdf ? (
+        <div>
+          <div>
+            Pages: {totalPages} Current Page: {pageNum + 1}
+          </div>
+          <div>
+            <BigButton title={"Prev Page"} onClick={()=>setPageNum(pageNum-1)} />
+            <BigButton title={"Next Page"} onClick={()=>setPageNum(pageNum+1)} />
+          </div>
+        </div>
+      ) : null}
       <div
         ref={documentRef}
         style={{ width: 800 }}
@@ -53,7 +67,7 @@ function App() {
 
           const pages = pdfDoc.getPages();
 
-          const firstPage = pages[0];
+          const firstPage = pages[pageNum];
 
           const sigURL = sigRef.current.toDataURL();
 
@@ -74,9 +88,14 @@ function App() {
           setPdf(URL);
         }}
       >
-        <Document file={pdf}>
+        <Document
+          file={pdf}
+          onLoadSuccess={(data) => {
+            setTotalPages(data.numPages);
+          }}
+        >
           <Page
-            pageNumber={1}
+            pageNumber={pageNum + 1}
             width={800}
             height={1200}
             onLoadSuccess={(data) => {
