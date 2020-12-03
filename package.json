@@ -7,11 +7,13 @@
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
     "annotpdf": "^1.0.12",
+    "pdf-lib": "^1.12.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-dropzone": "^11.2.4",
     "react-pdf": "^5.0.0",
     "react-scripts": "4.0.1",
+    "react-signature-canvas": "^1.0.3",
     "web-vitals": "^0.2.4"
   },
   "scripts": {

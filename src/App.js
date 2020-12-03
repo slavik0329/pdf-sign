@@ -1,33 +1,24 @@
-import logo from "./logo.svg";
 import "./App.css";
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import Drop from "./Drop";
 import { Document, Page, pdfjs } from "react-pdf";
-import { AnnotationFactory } from "annotpdf";
+import { PDFDocument, StandardFonts } from "pdf-lib";
+import { blobToURL } from "./Utils";
+import SignatureCanvas from "react-signature-canvas";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
-export async function fileToBlob(file, handleUpdate) {
-  const { content, size } = file;
-  let chunks = [];
-  let i = 0;
-  const totalCount = Math.round(size / 250000);
-
-  for await (const chunk of content) {
-    if (handleUpdate) {
-      handleUpdate(i, totalCount);
-    }
-    chunks.push(chunk);
-    i++;
-  }
-  // eslint-disable-next-line no-undef
-  return new Blob(chunks);
-}
-
 function App() {
+  const styles ={
+    sigBlock: {
+      display: 'inline-block',
+      border: '1px solid #000'
+    }
+  }
   const [pdf, setPdf] = useState(null);
   const [pageDetails, setPageDetails] = useState(null);
   const documentRef = useRef(null);
+  const sigRef = useRef(null);
 
   useEffect(() => {
     if (pdf) {
@@ -36,22 +27,22 @@ function App() {
 
   return (
     <div className="App">
+      <div style={styles.sigBlock}>
+        <SignatureCanvas
+          ref={sigRef}
+          canvasProps={{ width: '600', height: 200, className: "sigCanvas" }}
+        />
+      </div>
       <Drop
         onLoaded={async (files) => {
-          console.log("fi", files);
-          const reader = new FileReader();
-          reader.readAsDataURL(files[0]);
-          reader.onloadend = function () {
-            const base64data = reader.result;
-            console.log("base", base64data);
-            setPdf(base64data);
-          };
+          const URL = await blobToURL(files[0]);
+          setPdf(URL);
         }}
       />
       <div
         ref={documentRef}
         style={{ width: 800 }}
-        onClick={(e) => {
+        onClick={async (e) => {
           const { originalHeight, originalWidth } = pageDetails;
 
           const y =
@@ -61,20 +52,43 @@ function App() {
 
           const newY = (y * originalHeight) / documentRef.current.clientHeight;
           const newX = (x * originalWidth) / documentRef.current.clientWidth;
-          // y / documentRef.current.clientHeight = x / originalHeight
 
-          AnnotationFactory.loadFile(pdf).then((factory) => {
-            factory.createCircleAnnotation(
-              0,
-              [newX - 25, newY - 25, newX + 25, newY + 25],
-              null,
-              null,
-              { r: 0, g: 0, b: 0 }
-            );
-            factory.download();
-          });
+          const pdfDoc = await PDFDocument.load(pdf);
+          const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-          console.log("co", x, y);
+          const pages = pdfDoc.getPages();
+
+          const firstPage = pages[0];
+          // const { width, height } = firstPage.getSize();
+          // firstPage.drawText("Test", {
+          //   x: newX,
+          //   y: newY,
+          //   size: 50,
+          //   font: helveticaFont,
+          //   // color: rgb(0.95, 0.1, 0.1),
+          // });
+
+          const sigURL = sigRef.current.toDataURL();
+
+          const pngImageBytes = await fetch(sigURL).then((res) => res.arrayBuffer())
+console.log('byte', pngImageBytes)
+          const jpgImage = await pdfDoc.embedPng(pngImageBytes)
+          const jpgDims = jpgImage.scale(0.5)
+
+          firstPage.drawImage(jpgImage, {
+            x: newX,
+            y: newY,
+            width: jpgDims.width,
+            height: jpgDims.height,
+            // opacity: 0.75,
+          })
+          console.log('sig',sigURL)
+
+          const pdfBytes = await pdfDoc.save();
+          const blob = new Blob([new Uint8Array(pdfBytes)]);
+
+          const URL = await blobToURL(blob);
+          setPdf(URL);
         }}
       >
         <Document file={pdf}>
