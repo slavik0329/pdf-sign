@@ -20,11 +20,6 @@ function App() {
   const documentRef = useRef(null);
   const sigRef = useRef(null);
 
-  useEffect(() => {
-    if (pdf) {
-    }
-  }, [pdf]);
-
   return (
     <div className="App">
       <div style={styles.sigBlock}>
