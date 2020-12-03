@@ -1,3 +1,10 @@
 body {
   font-family: "Open Sans";
 }
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+  outline: none;
+}

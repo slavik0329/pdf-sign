@@ -88,20 +88,41 @@ function App() {
                   onClick={() => setSignatureDialogVisible(true)}
                 />
               ) : null}
-              {signatureURL && position ? (
+              {/*{signatureURL && position ? (*/}
+              {/*  <BigButton*/}
+              {/*    marginRight={8}*/}
+              {/*    title={"Set signature"}*/}
+              {/*  />*/}
+              {/*) : null}*/}
+              {pdf ? (
                 <BigButton
                   marginRight={8}
-                  title={"Set signature"}
-                  onClick={async () => {
+                  inverted={true}
+                  title={"Download"}
+                  onClick={() => {
+                    downloadURI(pdf, "file.pdf");
+                  }}
+                />
+              ) : null}
+            </div>
+            <div ref={documentRef} style={styles.documentBlock}>
+              {signatureURL ? (
+                <DraggableSignature
+                  url={signatureURL}
+                  onCancel={()=> {
+                    setSignatureURL(null);
+                  }}
+                  onSet={async () => {
                     const { originalHeight, originalWidth } = pageDetails;
 
                     const y =
                       documentRef.current.clientHeight -
                       (position.y -
-                        position.offsetY + 64-
+                        position.offsetY +
+                        64 -
                         documentRef.current.offsetTop);
                     const x =
-                      position.x -
+                      position.x - 160-
                       position.offsetX -
                       documentRef.current.offsetLeft;
 
@@ -134,64 +155,8 @@ function App() {
                     setPosition(null);
                     setSignatureURL(null);
                   }}
-                />
-              ) : null}
-              {pdf?<BigButton
-                marginRight={8}
-                inverted={true}
-                title={"Download"}
-                onClick={() => {
-                  console.log('pf', pdf)
-                  downloadURI(pdf, 'file.pdf')
-                }}
-              />:null}
-            </div>
-            <div
-              ref={documentRef}
-              style={styles.documentBlock}
-              onClick={async (e) => {
-                return null;
-                // const { originalHeight, originalWidth } = pageDetails;
-                //
-                // const y =
-                //   documentRef.current.clientHeight -
-                //   (e.pageY - documentRef.current.offsetTop);
-                // const x = e.pageX - documentRef.current.offsetLeft;
-                //
-                // // new XY in relation to actual document size
-                // const newY =
-                //   (y * originalHeight) / documentRef.current.clientHeight;
-                // const newX =
-                //   (x * originalWidth) / documentRef.current.clientWidth;
-                //
-                // const pdfDoc = await PDFDocument.load(pdf);
-                //
-                // const pages = pdfDoc.getPages();
-                // const firstPage = pages[pageNum];
-
-                // const pngImage = await pdfDoc.embedPng(sigURL);
-                // const pngDims = pngImage.scale(0.5);
-                //
-                // firstPage.drawImage(pngImage, {
-                //   x: newX,
-                //   y: newY,
-                //   width: pngDims.width,
-                //   height: pngDims.height,
-                // });
-                //
-                // const pdfBytes = await pdfDoc.save();
-                // const blob = new Blob([new Uint8Array(pdfBytes)]);
-                //
-                // const URL = await blobToURL(blob);
-                // setPdf(URL);
-              }}
-            >
-              {signatureURL ? (
-                <DraggableSignature
-                  url={signatureURL}
                   onEnd={async (ev) => {
                     setPosition(ev);
-                    console.log(ev);
                   }}
                 />
               ) : null}

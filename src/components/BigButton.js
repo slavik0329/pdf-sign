@@ -1,6 +1,6 @@
-import React from 'react';
-import {primary45} from '../utils/colors';
-import useHover from '../hooks/useHover';
+import React from "react";
+import { primary45 } from "../utils/colors";
+import useHover from "../hooks/useHover";
 
 export function BigButton({
   title,
@@ -12,12 +12,14 @@ export function BigButton({
   style,
   noHover,
   id,
-  marginRight
+  small,
+  disabled,
+  marginRight,
 }) {
   const [hoverRef, isHovered] = useHover();
 
-  const fillColor = customFillColor || primary45;
-  const whiteColor = customWhiteColor || '#FFF';
+  let fillColor = customFillColor || primary45;
+  const whiteColor = customWhiteColor || "#FFF";
 
   let initialBg = null;
   let hoverBg = fillColor;
@@ -32,21 +34,33 @@ export function BigButton({
     hoverColor = fillColor;
   }
 
+  if (disabled) {
+    initialBg = "#ddd";
+    hoverBg = "#ddd";
+    fillColor = "#ddd";
+  }
+
   const styles = {
     container: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: fullWidth ? '100%' : null,
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: fullWidth ? "100%" : null,
       backgroundColor: isHovered && !noHover ? hoverBg : initialBg,
-      color: isHovered && !noHover ? hoverColor : initialColor,
+      color:
+        isHovered && !noHover && !disabled
+          ? hoverColor
+          : disabled
+          ? "#999"
+          : initialColor,
       borderRadius: 4,
-      padding: '6px 8px',
+      padding: small ? "2px 4px" : "6px 8px",
+      fontSize: small ? 14 : null,
       border: `1px solid ${fillColor}`,
-      cursor: 'pointer',
-      userSelect: 'none',
-      boxSizing: 'border-box',
-      marginRight
+      cursor: !disabled ? "pointer" : null,
+      userSelect: "none",
+      boxSizing: "border-box",
+      marginRight,
     },
   };
 
@@ -54,8 +68,13 @@ export function BigButton({
     <div
       id={id}
       ref={hoverRef}
-      style={{...styles.container, ...style}}
-      onClick={onClick}>
+      style={{ ...styles.container, ...style }}
+      onClick={() => {
+        if (!disabled) {
+          onClick();
+        }
+      }}
+    >
       {title}
     </div>
   );

@@ -13,6 +13,8 @@ export default function Drop({ onLoaded }) {
       fontSize: 18,
       fontWeight: 600,
       borderRadius: 4,
+      userSelect: 'none',
+      outline: 0,
     },
   };
 
