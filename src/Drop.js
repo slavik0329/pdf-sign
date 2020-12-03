@@ -15,6 +15,7 @@ export default function Drop({ onLoaded }) {
       borderRadius: 4,
       userSelect: 'none',
       outline: 0,
+      cursor: 'pointer'
     },
   };
 

@@ -9,6 +9,7 @@ import { AddSigDialog } from "./components/AddSigDialog";
 import { Header } from "./Header";
 import { BigButton } from "./components/BigButton";
 import DraggableSignature from "./components/DraggableSignature";
+import DraggableText from "./components/DraggableText";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
@@ -40,12 +41,14 @@ function App() {
     controls: {
       maxWidth: 800,
       margin: "0 auto",
+      marginTop: 8,
     },
   };
   const [pdf, setPdf] = useState(null);
   const [signatureURL, setSignatureURL] = useState(null);
   const [position, setPosition] = useState(null);
   const [signatureDialogVisible, setSignatureDialogVisible] = useState(false);
+  const [textInputVisible, setTextInputVisible] = useState(false);
   const [pageNum, setPageNum] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [pageDetails, setPageDetails] = useState(null);
@@ -75,11 +78,7 @@ function App() {
         ) : null}
         {pdf ? (
           <div>
-            <PagingControl
-              pageNum={pageNum}
-              setPageNum={setPageNum}
-              totalPages={totalPages}
-            />
+
             <div style={styles.controls}>
               {!signatureURL ? (
                 <BigButton
@@ -88,12 +87,26 @@ function App() {
                   onClick={() => setSignatureDialogVisible(true)}
                 />
               ) : null}
-              {/*{signatureURL && position ? (*/}
-              {/*  <BigButton*/}
-              {/*    marginRight={8}*/}
-              {/*    title={"Set signature"}*/}
-              {/*  />*/}
-              {/*) : null}*/}
+
+              {!signatureURL ? (
+                <BigButton
+                  marginRight={8}
+                  title={"Add Text"}
+                  onClick={() => setTextInputVisible(true)}
+                />
+              ) : null}
+              <BigButton
+                marginRight={8}
+                title={"Reset"}
+                onClick={() => {
+                  setTextInputVisible(false);
+                  setSignatureDialogVisible(false)
+                  setSignatureURL(null)
+                  setPdf(null)
+                  setTotalPages(0)
+                  setPageDetails(null)
+                }}
+              />
               {pdf ? (
                 <BigButton
                   marginRight={8}
@@ -106,10 +119,55 @@ function App() {
               ) : null}
             </div>
             <div ref={documentRef} style={styles.documentBlock}>
+              {textInputVisible ? (
+                <DraggableText
+                  onEnd={setPosition}
+                  onSet={async (text) => {
+                    const { originalHeight, originalWidth } = pageDetails;
+
+                    const y =
+                      documentRef.current.clientHeight -
+                      (position.y +
+                        12 -
+                        position.offsetY -
+                        documentRef.current.offsetTop);
+                    const x =
+                      position.x -
+                      166 -
+                      position.offsetX -
+                      documentRef.current.offsetLeft;
+
+                    // new XY in relation to actual document size
+                    const newY =
+                      (y * originalHeight) / documentRef.current.clientHeight;
+                    const newX =
+                      (x * originalWidth) / documentRef.current.clientWidth;
+
+                    const pdfDoc = await PDFDocument.load(pdf);
+
+                    const pages = pdfDoc.getPages();
+                    const firstPage = pages[pageNum];
+
+                    firstPage.drawText(text, {
+                      x: newX,
+                      y: newY,
+                      size: 16,
+                    });
+
+                    const pdfBytes = await pdfDoc.save();
+                    const blob = new Blob([new Uint8Array(pdfBytes)]);
+
+                    const URL = await blobToURL(blob);
+                    setPdf(URL);
+                    setPosition(null);
+                    setTextInputVisible(false);
+                  }}
+                />
+              ) : null}
               {signatureURL ? (
                 <DraggableSignature
                   url={signatureURL}
-                  onCancel={()=> {
+                  onCancel={() => {
                     setSignatureURL(null);
                   }}
                   onSet={async () => {
@@ -122,7 +180,8 @@ function App() {
                         64 -
                         documentRef.current.offsetTop);
                     const x =
-                      position.x - 160-
+                      position.x -
+                      160 -
                       position.offsetX -
                       documentRef.current.offsetLeft;
 
@@ -155,9 +214,7 @@ function App() {
                     setPosition(null);
                     setSignatureURL(null);
                   }}
-                  onEnd={async (ev) => {
-                    setPosition(ev);
-                  }}
+                  onEnd={setPosition}
                 />
               ) : null}
               <Document
@@ -176,6 +233,11 @@ function App() {
                 />
               </Document>
             </div>
+            <PagingControl
+              pageNum={pageNum}
+              setPageNum={setPageNum}
+              totalPages={totalPages}
+            />
           </div>
         ) : null}
       </div>

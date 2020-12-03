@@ -5,6 +5,7 @@ export default function PagingControl({totalPages, pageNum, setPageNum}) {
   const styles= {
     container: {
       marginTop: 8,
+      marginBottom: 8,
     },
     inlineFlex: {
       display: 'flex',
