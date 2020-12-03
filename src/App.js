@@ -1,5 +1,5 @@
 import "./App.css";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Drop from "./Drop";
 import { Document, Page, pdfjs } from "react-pdf";
 import { PDFDocument, StandardFonts } from "pdf-lib";
@@ -9,12 +9,12 @@ import SignatureCanvas from "react-signature-canvas";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 function App() {
-  const styles ={
+  const styles = {
     sigBlock: {
-      display: 'inline-block',
-      border: '1px solid #000'
-    }
-  }
+      display: "inline-block",
+      border: "1px solid #000",
+    },
+  };
   const [pdf, setPdf] = useState(null);
   const [pageDetails, setPageDetails] = useState(null);
   const documentRef = useRef(null);
@@ -26,7 +26,7 @@ function App() {
         <SignatureCanvas
           velocityFilterWeight={1}
           ref={sigRef}
-          canvasProps={{ width: '600', height: 200, className: "sigCanvas" }}
+          canvasProps={{ width: "600", height: 200, className: "sigCanvas" }}
         />
       </div>
       <Drop
@@ -57,16 +57,15 @@ function App() {
 
           const sigURL = sigRef.current.toDataURL();
 
-          const pngImageBytes = await fetch(sigURL).then((res) => res.arrayBuffer())
-          const pngImage = await pdfDoc.embedPng(pngImageBytes)
-          const pngDims = pngImage.scale(0.5)
+          const pngImage = await pdfDoc.embedPng(sigURL);
+          const pngDims = pngImage.scale(0.5);
 
           firstPage.drawImage(pngImage, {
             x: newX,
             y: newY,
             width: pngDims.width,
             height: pngDims.height,
-          })
+          });
 
           const pdfBytes = await pdfDoc.save();
           const blob = new Blob([new Uint8Array(pdfBytes)]);
