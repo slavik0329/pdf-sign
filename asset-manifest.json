@@ -1,8 +1,8 @@
 {
   "files": {
     "main.css": "/pdf-sign/static/css/main.cbf0f5f2.chunk.css",
-    "main.js": "/pdf-sign/static/js/main.68ad4cdf.chunk.js",
-    "main.js.map": "/pdf-sign/static/js/main.68ad4cdf.chunk.js.map",
+    "main.js": "/pdf-sign/static/js/main.e31f6507.chunk.js",
+    "main.js.map": "/pdf-sign/static/js/main.e31f6507.chunk.js.map",
     "runtime-main.js": "/pdf-sign/static/js/runtime-main.e9b14c53.js",
     "runtime-main.js.map": "/pdf-sign/static/js/runtime-main.e9b14c53.js.map",
     "static/js/2.3db8aeac.chunk.js": "/pdf-sign/static/js/2.3db8aeac.chunk.js",
@@ -17,6 +17,6 @@
     "static/js/runtime-main.e9b14c53.js",
     "static/js/2.3db8aeac.chunk.js",
     "static/css/main.cbf0f5f2.chunk.css",
-    "static/js/main.68ad4cdf.chunk.js"
+    "static/js/main.e31f6507.chunk.js"
   ]
 }
