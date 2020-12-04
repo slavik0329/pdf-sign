@@ -111,6 +111,7 @@ function App() {
                   setSignatureURL(null);
                   setPdf(null);
                   setTotalPages(0);
+                  setPageNum(0);
                   setPageDetails(null);
                 }}
               />
@@ -137,11 +138,12 @@ function App() {
                   onEnd={setPosition}
                   onSet={async (text) => {
                     const { originalHeight, originalWidth } = pageDetails;
+                    const scale = originalWidth / documentRef.current.clientWidth;
 
                     const y =
                       documentRef.current.clientHeight -
                       (position.y +
-                        12 -
+                        (12 * scale) -
                         position.offsetY -
                         documentRef.current.offsetTop);
                     const x =
@@ -164,7 +166,7 @@ function App() {
                     firstPage.drawText(text, {
                       x: newX,
                       y: newY,
-                      size: 20 * (originalWidth/documentRef.current.clientWidth),
+                      size: 20 * scale,
                     });
 
                     const pdfBytes = await pdfDoc.save();
@@ -185,6 +187,7 @@ function App() {
                   }}
                   onSet={async () => {
                     const { originalHeight, originalWidth } = pageDetails;
+                    const scale = originalWidth / documentRef.current.clientWidth;
 
                     const y =
                       documentRef.current.clientHeight -
@@ -210,7 +213,7 @@ function App() {
                     const firstPage = pages[pageNum];
 
                     const pngImage = await pdfDoc.embedPng(signatureURL);
-                    const pngDims = pngImage.scale( (originalWidth/documentRef.current.clientWidth) * .3);
+                    const pngDims = pngImage.scale( scale * .3);
 
                     firstPage.drawImage(pngImage, {
                       x: newX,
@@ -227,7 +230,7 @@ function App() {
                         {
                           x: newX,
                           y: newY - 10,
-                          size: 14 * (originalWidth/documentRef.current.clientWidth),
+                          size: 14 * scale,
                           color: rgb(0.074, 0.545, 0.262),
                         }
                       );
