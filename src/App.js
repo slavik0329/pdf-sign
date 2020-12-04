@@ -2,7 +2,7 @@ import "./App.css";
 import { useRef, useState } from "react";
 import Drop from "./Drop";
 import { Document, Page, pdfjs } from "react-pdf";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, rgb } from "pdf-lib";
 import { blobToURL } from "./utils/Utils";
 import PagingControl from "./components/PagingControl";
 import { AddSigDialog } from "./components/AddSigDialog";
@@ -10,7 +10,7 @@ import { Header } from "./Header";
 import { BigButton } from "./components/BigButton";
 import DraggableSignature from "./components/DraggableSignature";
 import DraggableText from "./components/DraggableText";
-import dayjs from 'dayjs';
+import dayjs from "dayjs";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
@@ -46,6 +46,7 @@ function App() {
     },
   };
   const [pdf, setPdf] = useState(null);
+  const [autoDate, setAutoDate] = useState(true);
   const [signatureURL, setSignatureURL] = useState(null);
   const [position, setPosition] = useState(null);
   const [signatureDialogVisible, setSignatureDialogVisible] = useState(false);
@@ -61,6 +62,8 @@ function App() {
       <div style={styles.container}>
         {signatureDialogVisible ? (
           <AddSigDialog
+            autoDate={autoDate}
+            setAutoDate={setAutoDate}
             onClose={() => setSignatureDialogVisible(false)}
             onConfirm={(url) => {
               setSignatureURL(url);
@@ -91,7 +94,7 @@ function App() {
               <BigButton
                 marginRight={8}
                 title={"Add Date"}
-                onClick={() => setTextInputVisible('date')}
+                onClick={() => setTextInputVisible("date")}
               />
 
               <BigButton
@@ -125,7 +128,11 @@ function App() {
             <div ref={documentRef} style={styles.documentBlock}>
               {textInputVisible ? (
                 <DraggableText
-                  initialText={textInputVisible==='date'?dayjs().format('M/d/YYYY'):null}
+                  initialText={
+                    textInputVisible === "date"
+                      ? dayjs().format("M/d/YYYY")
+                      : null
+                  }
                   onCancel={() => setTextInputVisible(false)}
                   onEnd={setPosition}
                   onSet={async (text) => {
@@ -211,6 +218,20 @@ function App() {
                       width: pngDims.width,
                       height: pngDims.height,
                     });
+
+                    if (autoDate) {
+                      firstPage.drawText(
+                        `Signature created ${dayjs().format(
+                          "M/d/YYYY HH:mm:ss ZZ"
+                        )}`,
+                        {
+                          x: newX,
+                          y: newY - 10,
+                          size: 10,
+                          color: rgb(0.074, 0.545, 0.262),
+                        }
+                      );
+                    }
 
                     const pdfBytes = await pdfDoc.save();
                     const blob = new Blob([new Uint8Array(pdfBytes)]);
