@@ -164,7 +164,7 @@ function App() {
                     firstPage.drawText(text, {
                       x: newX,
                       y: newY,
-                      size: 16,
+                      size: 20 * (originalWidth/documentRef.current.clientWidth),
                     });
 
                     const pdfBytes = await pdfDoc.save();
@@ -210,7 +210,7 @@ function App() {
                     const firstPage = pages[pageNum];
 
                     const pngImage = await pdfDoc.embedPng(signatureURL);
-                    const pngDims = pngImage.scale(0.25);
+                    const pngDims = pngImage.scale( (originalWidth/documentRef.current.clientWidth) * .3);
 
                     firstPage.drawImage(pngImage, {
                       x: newX,
@@ -221,13 +221,13 @@ function App() {
 
                     if (autoDate) {
                       firstPage.drawText(
-                        `Signature created ${dayjs().format(
+                        `Signed ${dayjs().format(
                           "M/d/YYYY HH:mm:ss ZZ"
                         )}`,
                         {
                           x: newX,
                           y: newY - 10,
-                          size: 10,
+                          size: 14 * (originalWidth/documentRef.current.clientWidth),
                           color: rgb(0.074, 0.545, 0.262),
                         }
                       );
