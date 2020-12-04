@@ -10,6 +10,7 @@ import { Header } from "./Header";
 import { BigButton } from "./components/BigButton";
 import DraggableSignature from "./components/DraggableSignature";
 import DraggableText from "./components/DraggableText";
+import dayjs from 'dayjs';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
@@ -78,7 +79,6 @@ function App() {
         ) : null}
         {pdf ? (
           <div>
-
             <div style={styles.controls}>
               {!signatureURL ? (
                 <BigButton
@@ -88,23 +88,27 @@ function App() {
                 />
               ) : null}
 
-              {!signatureURL ? (
-                <BigButton
-                  marginRight={8}
-                  title={"Add Text"}
-                  onClick={() => setTextInputVisible(true)}
-                />
-              ) : null}
+              <BigButton
+                marginRight={8}
+                title={"Add Date"}
+                onClick={() => setTextInputVisible('date')}
+              />
+
+              <BigButton
+                marginRight={8}
+                title={"Add Text"}
+                onClick={() => setTextInputVisible(true)}
+              />
               <BigButton
                 marginRight={8}
                 title={"Reset"}
                 onClick={() => {
                   setTextInputVisible(false);
-                  setSignatureDialogVisible(false)
-                  setSignatureURL(null)
-                  setPdf(null)
-                  setTotalPages(0)
-                  setPageDetails(null)
+                  setSignatureDialogVisible(false);
+                  setSignatureURL(null);
+                  setPdf(null);
+                  setTotalPages(0);
+                  setPageDetails(null);
                 }}
               />
               {pdf ? (
@@ -121,6 +125,8 @@ function App() {
             <div ref={documentRef} style={styles.documentBlock}>
               {textInputVisible ? (
                 <DraggableText
+                  initialText={textInputVisible==='date'?dayjs().format('M/d/YYYY'):null}
+                  onCancel={() => setTextInputVisible(false)}
                   onEnd={setPosition}
                   onSet={async (text) => {
                     const { originalHeight, originalWidth } = pageDetails;
