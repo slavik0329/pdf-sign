@@ -1,11 +1,20 @@
-import React from 'react';
-import {primary45} from '../utils/colors';
-import {useIsSmallScreen} from '../hooks/useIsSmallScreen';
+import { CSSProperties, ReactNode } from 'react';
+import { primary45 } from '../utils/colors';
+import { useIsSmallScreen } from '../hooks/useIsSmallScreen';
 
-export function Modal({onClose, children, isVisible, style, positionTop}) {
+interface ModalProps {
+  onClose?: () => void;
+  children: ReactNode;
+  isVisible: boolean;
+  style?: CSSProperties;
+  positionTop?: number;
+}
+
+export function Modal({ onClose, children, isVisible, style, positionTop }: ModalProps) {
   const isSmallScreen = useIsSmallScreen();
 
-  const styles = {
+  const styles: { container: CSSProperties; background: CSSProperties; outer: CSSProperties } = {
+    outer: {},
     container: {
       position: isSmallScreen ? 'fixed' : 'absolute',
       backgroundColor: '#FFF',
@@ -37,7 +46,7 @@ export function Modal({onClose, children, isVisible, style, positionTop}) {
   return (
     <div style={styles.outer}>
       <div style={styles.background} onClick={onClose} />
-      <div style={{...styles.container, ...style}}>{children}</div>
+      <div style={{ ...styles.container, ...style }}>{children}</div>
     </div>
   );
 }

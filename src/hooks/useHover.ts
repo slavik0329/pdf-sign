@@ -1,14 +1,16 @@
-import React, {useCallback, useRef, useState} from 'react';
+import { useCallback, useRef, useState } from 'react';
 
-export default function useHover() {
+type CallbackRef = (node: HTMLElement | null) => void;
+
+export default function useHover(): [CallbackRef, boolean] {
   const [value, setValue] = useState(false);
 
   const handleMouseOver = useCallback(() => setValue(true), []);
   const handleMouseOut = useCallback(() => setValue(false), []);
 
-  const ref = useRef();
+  const ref = useRef<HTMLElement | null>(null);
 
-  const callbackRef = useCallback(
+  const callbackRef: CallbackRef = useCallback(
     (node) => {
       if (ref.current) {
         ref.current.removeEventListener('mouseenter', handleMouseOver);
@@ -22,7 +24,7 @@ export default function useHover() {
         ref.current.addEventListener('mouseleave', handleMouseOut);
       }
     },
-    [handleMouseOver, handleMouseOut],
+    [handleMouseOver, handleMouseOut]
   );
 
   return [callbackRef, value];

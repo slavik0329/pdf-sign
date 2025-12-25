@@ -1,5 +1,14 @@
 import { BigButton } from "./BigButton";
-import React from "react";
+import { CSSProperties, ReactNode } from "react";
+
+interface ConfirmOrCancelProps {
+  onCancel: () => void;
+  onConfirm: () => void;
+  confirmTitle?: string;
+  leftBlock?: ReactNode;
+  hideCancel?: boolean;
+  disabled?: boolean;
+}
 
 export function ConfirmOrCancel({
   onCancel,
@@ -8,8 +17,8 @@ export function ConfirmOrCancel({
   leftBlock,
   hideCancel,
   disabled
-}) {
-  const styles = {
+}: ConfirmOrCancelProps) {
+  const styles: { actions: CSSProperties; cancel: CSSProperties } = {
     actions: {
       display: "flex",
       justifyContent: "space-between",

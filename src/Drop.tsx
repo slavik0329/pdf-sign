@@ -1,9 +1,13 @@
-import React, { useCallback } from "react";
+import { CSSProperties, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { cleanBorder, primary45 } from "./utils/colors";
 
-export default function Drop({ onLoaded }) {
-  const styles = {
+interface DropProps {
+  onLoaded: (files: File[]) => void;
+}
+
+export default function Drop({ onLoaded }: DropProps) {
+  const styles: { container: CSSProperties } = {
     container: {
       textAlign: "center",
       border: cleanBorder,
@@ -19,13 +23,15 @@ export default function Drop({ onLoaded }) {
     },
   };
 
-  const onDrop = useCallback((acceptedFiles) => {
+  const onDrop = useCallback((acceptedFiles: File[]) => {
     onLoaded(acceptedFiles);
-    // Do something with the files
-  }, []);
+  }, [onLoaded]);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: "application/pdf",
+    accept: {
+      'application/pdf': ['.pdf']
+    },
   });
 
   return (

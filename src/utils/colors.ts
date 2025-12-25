@@ -11,13 +11,6 @@ export const primary15 = 'rgb(241 249 255)';
 export const primary5 = '#3881ad';
 export const primary6 = '#132b3a';
 
-// export const primary = '#666';
-// export const primary2 = '#EEE';
-// export const primary3 = '#CCC';
-// export const primary4 = '#AAA';
-// export const primary5 = '#888';
-// export const primary6 = '#333';
-
 export const primary16 = 'hsl(208 100% 96% / 1)';
 
 export const errorColor = '#ef6565';
