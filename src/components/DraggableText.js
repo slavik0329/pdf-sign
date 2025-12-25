@@ -43,7 +43,7 @@ export default function DraggableText({ onEnd, onSet, onCancel, initialText }) {
     }
   };
   return (
-    <Draggable onStop={onEnd}>
+    <Draggable onStop={(e, data) => onEnd(data)}>
       <div style={styles.container}>
         <div style={styles.controls}>
           <div style={styles.smallButton} onClick={()=>onSet(text)}>

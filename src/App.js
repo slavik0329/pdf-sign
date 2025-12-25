@@ -134,35 +134,33 @@ function App() {
                       ? dayjs().format("M/d/YYYY")
                       : null
                   }
-                  onCancel={() => setTextInputVisible(false)}
+                  onCancel={() => {
+                    setTextInputVisible(false);
+                    setPosition(null);
+                  }}
                   onEnd={setPosition}
                   onSet={async (text) => {
+                    if (!pageDetails || !position) return;
                     const { originalHeight, originalWidth } = pageDetails;
-                    const scale = originalWidth / documentRef.current.clientWidth;
 
-                    const y =
-                      documentRef.current.clientHeight -
-                      (position.y +
-                        (12 * scale) -
-                        position.offsetY -
-                        documentRef.current.offsetTop);
-                    const x =
-                      position.x -
-                      166 -
-                      position.offsetX -
-                      documentRef.current.offsetLeft;
+                    // position.x, position.y are relative to the document container
+                    // Convert from browser coords (y=0 at top) to PDF coords (y=0 at bottom)
+                    const textHeight = 20; // approximate text element height
+                    const x = position.x;
+                    const y = documentRef.current.clientHeight - position.y - textHeight;
 
-                    // new XY in relation to actual document size
-                    const newY =
-                      (y * originalHeight) / documentRef.current.clientHeight;
+                    // Scale to actual PDF dimensions
                     const newX =
                       (x * originalWidth) / documentRef.current.clientWidth;
+                    const newY =
+                      (y * originalHeight) / documentRef.current.clientHeight;
 
                     const pdfDoc = await PDFDocument.load(pdf);
 
                     const pages = pdfDoc.getPages();
                     const firstPage = pages[pageNum];
 
+                    const scale = originalWidth / documentRef.current.clientWidth;
                     firstPage.drawText(text, {
                       x: newX,
                       y: newY,
@@ -184,28 +182,25 @@ function App() {
                   url={signatureURL}
                   onCancel={() => {
                     setSignatureURL(null);
+                    setPosition(null);
                   }}
                   onSet={async () => {
+                    if (!pageDetails || !position) return;
                     const { originalHeight, originalWidth } = pageDetails;
                     const scale = originalWidth / documentRef.current.clientWidth;
 
-                    const y =
-                      documentRef.current.clientHeight -
-                      (position.y -
-                        position.offsetY +
-                        64 -
-                        documentRef.current.offsetTop);
-                    const x =
-                      position.x -
-                      160 -
-                      position.offsetX -
-                      documentRef.current.offsetLeft;
+                    // Signature overlay is 200px wide, approximate height ~100px
+                    // position.x, position.y are relative to document container
+                    // Convert from browser coords (y=0 at top) to PDF coords (y=0 at bottom)
+                    const signatureDisplayHeight = 100;
+                    const x = position.x;
+                    const y = documentRef.current.clientHeight - position.y - signatureDisplayHeight;
 
-                    // new XY in relation to actual document size
-                    const newY =
-                      (y * originalHeight) / documentRef.current.clientHeight;
+                    // Scale to actual PDF dimensions
                     const newX =
                       (x * originalWidth) / documentRef.current.clientWidth;
+                    const newY =
+                      (y * originalHeight) / documentRef.current.clientHeight;
 
                     const pdfDoc = await PDFDocument.load(pdf);
 
@@ -223,13 +218,15 @@ function App() {
                     });
 
                     if (autoDate) {
+                      // Position auto-date below the signature based on actual signature height
+                      const dateYOffset = pngDims.height + 5;
                       firstPage.drawText(
                         `Signed ${dayjs().format(
                           "M/d/YYYY HH:mm:ss ZZ"
                         )}`,
                         {
                           x: newX,
-                          y: newY - 10,
+                          y: newY - dateYOffset,
                           size: 14 * scale,
                           color: rgb(0.074, 0.545, 0.262),
                         }
