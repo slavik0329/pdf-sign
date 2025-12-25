@@ -1,5 +1,5 @@
 import "./App.css";
-import { useRef, useState } from "react";
+import { CSSProperties, useRef, useState } from "react";
 import Drop from "./Drop";
 import { Document, Page, pdfjs } from "react-pdf";
 import { PDFDocument, rgb } from "pdf-lib";
@@ -11,11 +11,14 @@ import { BigButton } from "./components/BigButton";
 import DraggableSignature from "./components/DraggableSignature";
 import DraggableText from "./components/DraggableText";
 import dayjs from "dayjs";
+import { DraggableData } from "react-draggable";
+import "react-pdf/dist/Page/TextLayer.css";
+import "react-pdf/dist/Page/AnnotationLayer.css";
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
-function downloadURI(uri, name) {
-  var link = document.createElement("a");
+function downloadURI(uri: string, name: string) {
+  const link = document.createElement("a");
   link.download = name;
   link.href = uri;
   document.body.appendChild(link);
@@ -23,8 +26,18 @@ function downloadURI(uri, name) {
   document.body.removeChild(link);
 }
 
+interface PageDetails {
+  originalHeight: number;
+  originalWidth: number;
+}
+
 function App() {
-  const styles = {
+  const styles: {
+    container: CSSProperties;
+    sigBlock: CSSProperties;
+    documentBlock: CSSProperties;
+    controls: CSSProperties;
+  } = {
     container: {
       maxWidth: 900,
       margin: "0 auto",
@@ -45,16 +58,17 @@ function App() {
       marginTop: 8,
     },
   };
-  const [pdf, setPdf] = useState(null);
+
+  const [pdf, setPdf] = useState<string | null>(null);
   const [autoDate, setAutoDate] = useState(true);
-  const [signatureURL, setSignatureURL] = useState(null);
-  const [position, setPosition] = useState(null);
+  const [signatureURL, setSignatureURL] = useState<string | null>(null);
+  const [position, setPosition] = useState<DraggableData | null>(null);
   const [signatureDialogVisible, setSignatureDialogVisible] = useState(false);
-  const [textInputVisible, setTextInputVisible] = useState(false);
+  const [textInputVisible, setTextInputVisible] = useState<boolean | "date">(false);
   const [pageNum, setPageNum] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [pageDetails, setPageDetails] = useState(null);
-  const documentRef = useRef(null);
+  const [pageDetails, setPageDetails] = useState<PageDetails | null>(null);
+  const documentRef = useRef<HTMLDivElement>(null);
 
   return (
     <div>
@@ -131,38 +145,36 @@ function App() {
                 <DraggableText
                   initialText={
                     textInputVisible === "date"
-                      ? dayjs().format("M/d/YYYY")
+                      ? dayjs().format("M/D/YYYY")
                       : null
                   }
-                  onCancel={() => setTextInputVisible(false)}
+                  onCancel={() => {
+                    setTextInputVisible(false);
+                    setPosition(null);
+                  }}
                   onEnd={setPosition}
                   onSet={async (text) => {
+                    if (!pageDetails || !position || !documentRef.current) return;
                     const { originalHeight, originalWidth } = pageDetails;
-                    const scale = originalWidth / documentRef.current.clientWidth;
 
-                    const y =
-                      documentRef.current.clientHeight -
-                      (position.y +
-                        (12 * scale) -
-                        position.offsetY -
-                        documentRef.current.offsetTop);
-                    const x =
-                      position.x -
-                      166 -
-                      position.offsetX -
-                      documentRef.current.offsetLeft;
+                    // position.x, position.y are relative to the document container
+                    // Convert from browser coords (y=0 at top) to PDF coords (y=0 at bottom)
+                    const textHeight = 20; // approximate text element height
+                    const x = position.x;
+                    const y = documentRef.current.clientHeight - position.y - textHeight;
 
-                    // new XY in relation to actual document size
-                    const newY =
-                      (y * originalHeight) / documentRef.current.clientHeight;
+                    // Scale to actual PDF dimensions
                     const newX =
                       (x * originalWidth) / documentRef.current.clientWidth;
+                    const newY =
+                      (y * originalHeight) / documentRef.current.clientHeight;
 
                     const pdfDoc = await PDFDocument.load(pdf);
 
                     const pages = pdfDoc.getPages();
                     const firstPage = pages[pageNum];
 
+                    const scale = originalWidth / documentRef.current.clientWidth;
                     firstPage.drawText(text, {
                       x: newX,
                       y: newY,
@@ -184,28 +196,25 @@ function App() {
                   url={signatureURL}
                   onCancel={() => {
                     setSignatureURL(null);
+                    setPosition(null);
                   }}
                   onSet={async () => {
+                    if (!pageDetails || !position || !documentRef.current) return;
                     const { originalHeight, originalWidth } = pageDetails;
                     const scale = originalWidth / documentRef.current.clientWidth;
 
-                    const y =
-                      documentRef.current.clientHeight -
-                      (position.y -
-                        position.offsetY +
-                        64 -
-                        documentRef.current.offsetTop);
-                    const x =
-                      position.x -
-                      160 -
-                      position.offsetX -
-                      documentRef.current.offsetLeft;
+                    // Signature overlay is 200px wide, approximate height ~100px
+                    // position.x, position.y are relative to document container
+                    // Convert from browser coords (y=0 at top) to PDF coords (y=0 at bottom)
+                    const signatureDisplayHeight = 100;
+                    const x = position.x;
+                    const y = documentRef.current.clientHeight - position.y - signatureDisplayHeight;
 
-                    // new XY in relation to actual document size
-                    const newY =
-                      (y * originalHeight) / documentRef.current.clientHeight;
+                    // Scale to actual PDF dimensions
                     const newX =
                       (x * originalWidth) / documentRef.current.clientWidth;
+                    const newY =
+                      (y * originalHeight) / documentRef.current.clientHeight;
 
                     const pdfDoc = await PDFDocument.load(pdf);
 
@@ -213,7 +222,7 @@ function App() {
                     const firstPage = pages[pageNum];
 
                     const pngImage = await pdfDoc.embedPng(signatureURL);
-                    const pngDims = pngImage.scale( scale * .3);
+                    const pngDims = pngImage.scale(scale * 0.3);
 
                     firstPage.drawImage(pngImage, {
                       x: newX,
@@ -223,13 +232,15 @@ function App() {
                     });
 
                     if (autoDate) {
+                      // Position auto-date below the signature based on actual signature height
+                      const dateYOffset = pngDims.height + 5;
                       firstPage.drawText(
                         `Signed ${dayjs().format(
-                          "M/d/YYYY HH:mm:ss ZZ"
+                          "M/D/YYYY HH:mm:ss ZZ"
                         )}`,
                         {
                           x: newX,
-                          y: newY - 10,
+                          y: newY - dateYOffset,
                           size: 14 * scale,
                           color: rgb(0.074, 0.545, 0.262),
                         }
@@ -256,9 +267,11 @@ function App() {
                 <Page
                   pageNumber={pageNum + 1}
                   width={800}
-                  height={1200}
                   onLoadSuccess={(data) => {
-                    setPageDetails(data);
+                    setPageDetails({
+                      originalHeight: data.originalHeight,
+                      originalWidth: data.originalWidth,
+                    });
                   }}
                 />
               </Document>

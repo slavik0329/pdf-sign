@@ -1,13 +1,27 @@
+import { CSSProperties, useRef } from "react";
 import { Dialog } from "./Dialog";
 import SignatureCanvas from "react-signature-canvas";
 import { ConfirmOrCancel } from "./ConfirmOrCancel";
 import { primary45 } from "../utils/colors";
-import { useRef } from "react";
 
-export function AddSigDialog({ onConfirm, onClose, autoDate, setAutoDate }) {
-  const sigRef = useRef(null);
+interface AddSigDialogProps {
+  onConfirm: (signatureUrl: string) => void;
+  onClose: () => void;
+  autoDate: boolean;
+  setAutoDate: (autoDate: boolean) => void;
+}
 
-  const styles = {
+export function AddSigDialog({ onConfirm, onClose, autoDate, setAutoDate }: AddSigDialogProps) {
+  const sigRef = useRef<SignatureCanvas>(null);
+
+  const styles: {
+    container: CSSProperties;
+    sigContainer: CSSProperties;
+    sigBlock: CSSProperties;
+    instructions: CSSProperties;
+    instructionsContainer: CSSProperties;
+  } = {
+    container: {},
     sigContainer: {
       display: "flex",
       justifyContent: "center",
@@ -30,6 +44,7 @@ export function AddSigDialog({ onConfirm, onClose, autoDate, setAutoDate }) {
       justifyContent: "center",
     },
   };
+
   return (
     <Dialog
       isVisible={true}
@@ -66,8 +81,10 @@ export function AddSigDialog({ onConfirm, onClose, autoDate, setAutoDate }) {
           <ConfirmOrCancel
             onCancel={onClose}
             onConfirm={() => {
-              const sigURL = sigRef.current.toDataURL();
-              onConfirm(sigURL);
+              if (sigRef.current) {
+                const sigURL = sigRef.current.toDataURL();
+                onConfirm(sigURL);
+              }
             }}
           />
         </div>

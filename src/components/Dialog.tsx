@@ -1,7 +1,18 @@
-import React from 'react';
-import {primary45} from '../utils/colors';
-import {FaTimes} from 'react-icons/fa';
-import {Modal} from './Modal';
+import { CSSProperties, ReactNode } from 'react';
+import { primary45 } from '../utils/colors';
+import { FaTimes } from 'react-icons/fa';
+import { Modal } from './Modal';
+
+interface DialogProps {
+  isVisible: boolean;
+  body: ReactNode;
+  onClose?: () => void;
+  title: string;
+  noPadding?: boolean;
+  backgroundColor?: string;
+  positionTop?: number;
+  style?: CSSProperties;
+}
 
 export function Dialog({
   isVisible,
@@ -12,12 +23,12 @@ export function Dialog({
   backgroundColor,
   positionTop,
   style,
-}) {
+}: DialogProps) {
   if (!isVisible) {
     return null;
   }
 
-  const styles = {
+  const styles: { header: CSSProperties; body: CSSProperties; xIcon: CSSProperties } = {
     header: {
       backgroundColor: primary45,
       color: '#FFF',
@@ -38,7 +49,7 @@ export function Dialog({
 
   return (
     <Modal onClose={onClose} isVisible={isVisible} positionTop={positionTop} style={style}>
-      <div style={styles.container}>
+      <div>
         <div style={styles.header}>
           <div>{title}</div>
           <FaTimes

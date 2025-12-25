@@ -1,22 +1,34 @@
-import Draggable from "react-draggable";
+import { CSSProperties, useState, useEffect, useRef } from "react";
+import Draggable, { DraggableData } from "react-draggable";
 import { FaCheck, FaTimes } from "react-icons/fa";
-import { cleanBorder, errorColor, goodColor, primary45 } from "../utils/colors";
-import { useState, useEffect, useRef } from "react";
+import { errorColor, goodColor, primary45 } from "../utils/colors";
 
-export default function DraggableText({ onEnd, onSet, onCancel, initialText }) {
+interface DraggableTextProps {
+  onEnd: (data: DraggableData) => void;
+  onSet: (text: string) => void;
+  onCancel: () => void;
+  initialText?: string | null;
+}
+
+export default function DraggableText({ onEnd, onSet, onCancel, initialText }: DraggableTextProps) {
   const [text, setText] = useState("Text");
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (initialText) {
-      setText(initialText)
+      setText(initialText);
     } else {
-      inputRef.current.focus();
-      inputRef.current.select()
+      inputRef.current?.focus();
+      inputRef.current?.select();
     }
-  }, [])
+  }, [initialText]);
 
-  const styles = {
+  const styles: {
+    container: CSSProperties;
+    controls: CSSProperties;
+    smallButton: CSSProperties;
+    input: CSSProperties;
+  } = {
     container: {
       position: "absolute",
       zIndex: 100000,
@@ -27,7 +39,6 @@ export default function DraggableText({ onEnd, onSet, onCancel, initialText }) {
       right: 0,
       display: "inline-block",
       backgroundColor: primary45,
-      // borderRadius: 4,
     },
     smallButton: {
       display: "inline-block",
@@ -42,11 +53,12 @@ export default function DraggableText({ onEnd, onSet, onCancel, initialText }) {
       cursor: 'move'
     }
   };
+
   return (
-    <Draggable onStop={onEnd}>
+    <Draggable onStop={(e, data) => onEnd(data)}>
       <div style={styles.container}>
         <div style={styles.controls}>
-          <div style={styles.smallButton} onClick={()=>onSet(text)}>
+          <div style={styles.smallButton} onClick={() => onSet(text)}>
             <FaCheck color={goodColor} />
           </div>
           <div style={styles.smallButton} onClick={onCancel}>
